@@ -90,12 +90,12 @@ char* circ_pop_front(circ_buff* cb) {
         return 0;
     }
 
-    char** first_elem = ring_getelem(rb, 0);
+    char** first_elem = circ_getelem(cb, 0);
 
     char* res = *first_elem;
 
     *first_elem = 0;
-    cb->start = (cb->start + 1) & cb->max_len;
+    cb->start = (cb->start + 1) % cb->max_len;
     cb->len--;
     return res;
 }
