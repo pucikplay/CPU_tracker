@@ -1,5 +1,7 @@
-#include <stdbool.h>
 #include <string.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
 #include "circ_buffer.h"
 
@@ -50,6 +52,14 @@ void circ_delete(circ_buff* cb) {
         circ_remove_arr(cb);
     }
     free(cb);
+}
+
+bool circ_is_full(circ_buff* cb) {
+    return cb->len == cb->max_len;
+}
+
+bool circ_is_empty(circ_buff* cb) {
+    return cb->len == 0;
 }
 
 size_t circ_getpos(const circ_buff* cb, size_t pos) {
