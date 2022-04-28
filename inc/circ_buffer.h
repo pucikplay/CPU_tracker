@@ -1,6 +1,9 @@
 #ifndef CIRC_BUFFER_H
 #define CIRC_BUFFER_H
 
+#include<stdbool.h>
+#include <stddef.h>
+
 typedef struct circ_buff circ_buff;
 
 circ_buff* circ_init(circ_buff* const cb, const size_t max_len);

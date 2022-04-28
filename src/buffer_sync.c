@@ -6,13 +6,13 @@
 #include <stdbool.h>
 
 
-typedef struct Buff_sync
+struct Buff_sync
 {
-    circ_buff buffer;
+    circ_buff* buffer;
     pthread_mutex_t mutex;
     pthread_cond_t can_append;
     pthread_cond_t can_pop;
-} Buff_sync;
+};
 
 static Buff_sync* buff_sync_create(size_t max_len)
 {
@@ -33,7 +33,7 @@ static Buff_sync* buff_sync_create(size_t max_len)
                 .mutex = PTHREAD_MUTEX_INITIALIZER,
                 .can_append = PTHREAD_COND_INITIALIZER,
                 .can_pop = PTHREAD_COND_INITIALIZER,
-    }
+    };
 
     if(!new_bs->buffer) {
         free(new_bs);
@@ -57,12 +57,12 @@ static void buff_sync_destroy(Buff_sync* bs)
 
 static bool buff_sync_is_full(const Buff_sync* bs)
 {
-    return bs ? circ_is_full(bs->buff) : false;
+    return bs ? circ_is_full(bs->buffer) : false;
 }
 
 static bool buff_sync_is_empty(const Buff_sync* bs)
 {
-    return bs ? circ_is_empty(bs->buff) : true;
+    return bs ? circ_is_empty(bs->buffer) : true;
 }
 
 static bool buff_sync_append(Buff_sync* bs, char* new_elem, size_t elem_len)
