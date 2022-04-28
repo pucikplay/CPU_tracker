@@ -63,15 +63,37 @@ size_t reader_read_stat(char** buff, size_t* buff_len, FILE* stat_file)
 
 void* thread_read(void *arg)
 {
-    // Buff_sync* bs = *(Buff_sync**)arg;
+    Buff_sync* bs = *(Buff_sync**)arg;
     
-    // pid_t tid = syscall(__NR_gettid);
+    pid_t tid = syscall(__NR_gettid);
 
-    // char* buff = 0;
-    // size_t buff_size = 0;
-    // FILE* stat_file = fopen(STAT_PATH, "r");
+    char* buff = 0;
+    size_t buff_size = 0;
+    FILE* stat_file;
+    bool done = false;
 
-    // printf("[%d] Waiting for buffor access\n", tid);
-    // buff_sync_lock(bs);
+    while (!done) {
+        stat_file = fopen(STAT_PATH, "r");
+
+        if (stat_file && reader_read_stat(&buff, &buff_size, stat_file)) {
+            printf("[%d] Waiting for buffor access\n", tid);
+            buff_sync_lock(bs);
+            
+            if (buff_sync_is_full(bs)) {
+                printf("[%d] Buffer full\n");
+                byff_sync_wait_for_analyzer(bs);
+            }
+
+            printf("[%d] Putting data in buffer\n");
+            buff_sync_append(bs, buff, buff_size);
+
+            buff_sync_call_analyzer(bs);
+            buff_sync_unlock(bs);
+        }
+
+        fclose(stat_file);
+    }
+
+    return NULL;
 
 }

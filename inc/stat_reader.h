@@ -5,5 +5,6 @@
 #include <stdio.h>
 
 size_t reader_read_stat(char** buff, size_t* buff_len, FILE* stat_file);
+void* thread_read(void *arg);
 
 #endif
