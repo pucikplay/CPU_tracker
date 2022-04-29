@@ -98,10 +98,10 @@ void buff_sync_call_reader(Buff_sync* bs)
 
 void buff_sync_wait_for_reader(Buff_sync* bs)
 {
-    pthread_cond_wait(&bs->can_append, &bs->mutex);
+    pthread_cond_wait(&bs->can_pop, &bs->mutex);
 }
 
 void buff_sync_wait_for_analyzer(Buff_sync* bs)
 {
-    pthread_cond_wait(&bs->can_pop, &bs->mutex);
+    pthread_cond_wait(&bs->can_append, &bs->mutex);
 }

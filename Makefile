@@ -1,2 +1,2 @@
 testing:
-	gcc -Wall -Wextra -Iinc -o testing.out ./test/test.c ./src/*.c -pthread
+	gcc -g3 -Wall -Wextra -Iinc -o testing.out ./test/test.c ./src/*.c -pthread
