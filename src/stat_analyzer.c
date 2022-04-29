@@ -8,7 +8,7 @@
 #include "buffer_sync.h"
 #include "stat_utils.h"
 
-char* analyzer_calc(char* prev_data, char* curr_data)
+static char* analyzer_calc(char* prev_data, char* curr_data)
 {
     if (!prev_data || !curr_data)
         return 0;
@@ -35,7 +35,6 @@ char* analyzer_calc(char* prev_data, char* curr_data)
         if (!prev_line || !curr_line)
             continue;
 
-        //printf("%s %s %s %s %s %s %s %s\n", prev_line[1], prev_line[2], prev_line[3], prev_line[4], prev_line[5], prev_line[6], prev_line[7], prev_line[8]);
         size_t prev_idle = atoi(prev_line[4]) + atoi(prev_line[5]);
         size_t curr_idle = atoi(curr_line[4]) + atoi(curr_line[5]);
 

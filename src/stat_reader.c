@@ -11,7 +11,7 @@
 #define STAT_PATH "/proc/stat"
 #define LINE_LENGTH 256U
 
-size_t reader_read_stat(char** buff, size_t* buff_len, FILE* stat_file)
+static size_t reader_read_stat(char** buff, size_t* buff_len, FILE* stat_file)
 {
     if (!stat_file || !buff) {
         printf("Reader: invalid buffer or file pointer.\n");
