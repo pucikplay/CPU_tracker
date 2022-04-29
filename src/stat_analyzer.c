@@ -6,54 +6,7 @@
 
 #include "stat_analyzer.h"
 #include "buffer_sync.h"
-
-char** analyzer_string_split(char* restrict data, const char delimiter, size_t* token_count)
-{
-    if (!data)
-        return 0;
-
-    if (!*token_count) {
-        char* symbol = data;
-
-        while (*symbol) {
-            if (*symbol == delimiter)
-                ++(*token_count);
-
-            ++symbol;
-        }
-    }
-
-    char** result = malloc(sizeof(*result) * (*token_count));
-    if (!result)
-        return 0;
-
-    size_t idx = 0;
-    char delim[2] = {delimiter, '\0'};
-    char* token = strtok(data, delim);
-    while (token && idx < *token_count) {
-        result[idx] = strdup(token);
-        token = strtok(0, delim);
-        ++idx;
-    }
-    *token_count = idx;
-
-    return result;
-}
-
-char* util_str_concat(char const* restrict str1, char const* restrict str2) {
-    const size_t s1_len = strlen(str1);
-    const size_t s2_len = strlen(str2);
-
-    char* res = malloc(s1_len + s2_len + 1);
-    if (!res)
-        return 0;
-    
-    memcpy(res, str1, s1_len);
-    memcpy(res + s1_len, str2, s2_len);
-    res[s1_len + s2_len] = '\0';
-    
-    return res;
-}
+#include "stat_utils.h"
 
 char* analyzer_calc(char* prev_data, char* curr_data)
 {
@@ -112,8 +65,6 @@ char* analyzer_calc(char* prev_data, char* curr_data)
         free(prev_data_tokenized[i]);
         free(curr_data_tokenized[i]); 
     }
-    free(prev_data);
-    free(curr_data);
 
     return cpu_data;
 }
@@ -133,11 +84,11 @@ void* thread_analyze(void *arg)
         buff_sync_lock(bs);
         
         if (buff_sync_is_empty(bs))
-            buff_sync_wait_for_reader(bs);
+            buff_sync_wait_for_producer(bs);
 
         prev_data = buff_sync_pop(bs);
 
-        buff_sync_call_reader(bs);
+        buff_sync_call_producer(bs);
         buff_sync_unlock(bs);
     }
 
@@ -145,11 +96,11 @@ void* thread_analyze(void *arg)
         buff_sync_lock(bs);
         
         if (buff_sync_is_empty(bs))
-            buff_sync_wait_for_reader(bs);
+            buff_sync_wait_for_producer(bs);
 
         curr_data = buff_sync_pop(bs);
 
-        buff_sync_call_reader(bs);
+        buff_sync_call_producer(bs);
         buff_sync_unlock(bs);
 
         if (!curr_data)
@@ -160,10 +111,9 @@ void* thread_analyze(void *arg)
         result_data = analyzer_calc(prev_data, curr_data);
         printf("%s\n", result_data);
 
-        //free(curr_data);
+        free(curr_data);
         curr_data = 0;
-
-        //free(prev_data);
+        free(prev_data);
         prev_data = strdup(temp_data);
         free(temp_data);
         temp_data = 0;
@@ -172,9 +122,6 @@ void* thread_analyze(void *arg)
         result_data = 0;
         sleep(1);
     }
-
-    //free(prev_data);
-    //free(curr_data);
 
     return NULL;
 }

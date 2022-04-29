@@ -6,15 +6,10 @@
 #include <unistd.h>
 
 #include "buffer_sync.h"
+#include "stat_utils.h"
 
 #define STAT_PATH "/proc/stat"
 #define LINE_LENGTH 256U
-
-bool reader_starts_with(const char *a, const char *b)
-{
-   if(strncmp(a, b, strlen(b)) == 0) return 1;
-   return 0;
-}
 
 size_t reader_read_stat(char** buff, size_t* buff_len, FILE* stat_file)
 {
@@ -78,11 +73,11 @@ void* thread_read(void *arg)
             buff_sync_lock(bs);
             
             if (buff_sync_is_full(bs))
-                buff_sync_wait_for_analyzer(bs);
+                buff_sync_wait_for_consumer(bs);
 
             buff_sync_append(bs, buff, buff_size);
 
-            buff_sync_call_analyzer(bs);
+            buff_sync_call_consumer(bs);
             buff_sync_unlock(bs);
         }
         fclose(stat_file);

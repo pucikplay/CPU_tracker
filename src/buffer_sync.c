@@ -86,22 +86,22 @@ void buff_sync_unlock(Buff_sync* bs)
     pthread_mutex_unlock(&bs->mutex);
 }
 
-void buff_sync_call_analyzer(Buff_sync* bs)
+void buff_sync_call_consumer(Buff_sync* bs)
 {
     pthread_cond_signal(&bs->can_pop);
 }
 
-void buff_sync_call_reader(Buff_sync* bs)
+void buff_sync_call_producer(Buff_sync* bs)
 {
     pthread_cond_signal(&bs->can_append);
 }
 
-void buff_sync_wait_for_reader(Buff_sync* bs)
+void buff_sync_wait_for_producer(Buff_sync* bs)
 {
     pthread_cond_wait(&bs->can_pop, &bs->mutex);
 }
 
-void buff_sync_wait_for_analyzer(Buff_sync* bs)
+void buff_sync_wait_for_consumer(Buff_sync* bs)
 {
     pthread_cond_wait(&bs->can_append, &bs->mutex);
 }

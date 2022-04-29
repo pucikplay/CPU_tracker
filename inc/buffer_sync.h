@@ -14,9 +14,9 @@ bool buff_sync_is_full(const Buff_sync* bs);
 bool buff_sync_is_empty(const Buff_sync* bs);
 void buff_sync_lock(Buff_sync* bs);
 void buff_sync_unlock(Buff_sync* bs);
-void buff_sync_call_analyzer(Buff_sync* bs);
-void buff_sync_call_reader(Buff_sync* bs);
-void buff_sync_wait_for_reader(Buff_sync* bs);
-void buff_sync_wait_for_analyzer(Buff_sync* bs);
+void buff_sync_call_consumer(Buff_sync* bs);
+void buff_sync_call_producer(Buff_sync* bs);
+void buff_sync_wait_for_producer(Buff_sync* bs);
+void buff_sync_wait_for_consumer(Buff_sync* bs);
 
 #endif
