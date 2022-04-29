@@ -3,9 +3,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include "buffer_sync.h"
@@ -68,8 +65,6 @@ size_t reader_read_stat(char** buff, size_t* buff_len, FILE* stat_file)
 void* thread_read(void *arg)
 {
     Buff_sync* bs = *(Buff_sync**)arg;
-    
-    //pid_t tid = 0; syscall(__NR_gettid);
 
     char* buff = 0;
     size_t buff_size = 0;
@@ -80,15 +75,11 @@ void* thread_read(void *arg)
         stat_file = fopen(STAT_PATH, "r");
 
         if (stat_file && reader_read_stat(&buff, &buff_size, stat_file)) {
-            //printf("[%d] Waiting for buffor access\n", tid);
             buff_sync_lock(bs);
             
-            if (buff_sync_is_full(bs)) {
-                //printf("[%d] Buffer full\n", tid);
+            if (buff_sync_is_full(bs))
                 buff_sync_wait_for_analyzer(bs);
-            }
 
-            //printf("[%d] Putting data in buffer\n", tid);
             buff_sync_append(bs, buff, buff_size);
 
             buff_sync_call_analyzer(bs);

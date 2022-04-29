@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include "stat_analyzer.h"
@@ -126,7 +123,6 @@ void* thread_analyze(void *arg)
 {
     Buff_sync* bs = *(Buff_sync**)arg;
 
-    //pid_t tid = 1;//syscall(__NR_gettid);
     bool done = false;
     char* prev_data = 0;
     char* curr_data = 0;
@@ -134,15 +130,11 @@ void* thread_analyze(void *arg)
     char* result_data = 0;
 
     while(!prev_data) {
-        //printf("[%d] Waiting for buffer access\n", tid);
         buff_sync_lock(bs);
         
-        if (buff_sync_is_empty(bs)) {
-            //printf("[%d] Buffer empty\n", tid);
+        if (buff_sync_is_empty(bs))
             buff_sync_wait_for_reader(bs);
-        }
 
-        //printf("[%d] Getting data from buffer\n", tid);
         prev_data = buff_sync_pop(bs);
 
         buff_sync_call_reader(bs);
@@ -150,15 +142,11 @@ void* thread_analyze(void *arg)
     }
 
     while(!done) {
-        //printf("[%d] Waiting for buffer access\n", tid);
         buff_sync_lock(bs);
         
-        if (buff_sync_is_empty(bs)) {
-            //printf("[%d] Buffer empty\n", tid);
+        if (buff_sync_is_empty(bs))
             buff_sync_wait_for_reader(bs);
-        }
 
-        //printf("[%d] Getting data from buffer\n", tid);
         curr_data = buff_sync_pop(bs);
 
         buff_sync_call_reader(bs);
@@ -177,10 +165,10 @@ void* thread_analyze(void *arg)
 
         //free(prev_data);
         prev_data = strdup(temp_data);
-        //free(temp_data);
+        free(temp_data);
         temp_data = 0;
 
-        //free(result_data);
+        free(result_data);
         result_data = 0;
         sleep(1);
     }
