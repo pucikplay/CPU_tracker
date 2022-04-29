@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #include "buffer_sync.h"
 
@@ -80,11 +83,11 @@ void* thread_read(void *arg)
             buff_sync_lock(bs);
             
             if (buff_sync_is_full(bs)) {
-                printf("[%d] Buffer full\n");
-                byff_sync_wait_for_analyzer(bs);
+                printf("[%d] Buffer full\n", tid);
+                buff_sync_wait_for_analyzer(bs);
             }
 
-            printf("[%d] Putting data in buffer\n");
+            printf("[%d] Putting data in buffer\n", tid);
             buff_sync_append(bs, buff, buff_size);
 
             buff_sync_call_analyzer(bs);
