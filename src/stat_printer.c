@@ -1,12 +1,47 @@
 #include "stat_printer.h"
 #include "buffer_sync.h"
+#include "stat_utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+#define FULL_BAR_LEN 66.0
 
 void printer_print(char* raw_data)
 {
-    printf("%s\n", raw_data);
+    size_t core_count = 0;
+    char** data_tokenized = analyzer_string_split(raw_data, ' ', &core_count);
+
+    //clear console screen
+    printf("\e[1;1H\e[2J");
+
+    //print percentage scale
+    printf("\t\t\t25%%\t\t50%%\t\t75%%\t\t100%%\n");
+    
+    printf("CPU:\t");
+
+    size_t bar_length = (size_t)(FULL_BAR_LEN * (atof(data_tokenized[0]) / 100.0));
+
+    for (size_t i = 0; i < bar_length; ++i) {
+        putchar('=');
+    }
+    putchar('\n');
+
+    for (size_t i = 1; i < core_count; ++i) {
+        printf("CPU %ld:\t", i - 1);
+
+        bar_length = (size_t)(FULL_BAR_LEN * (atof(data_tokenized[i]) / 100.0));
+
+        for (size_t j = 0; j < bar_length; ++j) {
+            putchar('=');
+        }
+        putchar('\n');
+    }
+
+    for (size_t i = 0; i < core_count; ++i) {
+        free(data_tokenized[i]);
+    }
 }
 
 void* thread_print(void *arg)
@@ -37,6 +72,7 @@ void* thread_print(void *arg)
         //clean
         free(cpu_data);
         cpu_data = 0;
+        sleep(1);
     }
 
 
