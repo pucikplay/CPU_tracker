@@ -8,6 +8,35 @@
 #include "buffer_sync.h"
 #include "stat_utils.h"
 
+struct Analyzer_buffers
+{
+    Buff_sync* reader_buffer;
+    Buff_sync* printer_buffer;
+};
+
+Analyzer_buffers* abuffs_create(Buff_sync* reader_buffer, Buff_sync* printer_buffer)
+{
+    if (!reader_buffer || !printer_buffer)
+        return 0;
+
+    Analyzer_buffers* abuffs = malloc(sizeof(Analyzer_buffers));
+
+    if (!abuffs)
+        return 0;
+
+    *abuffs = (Analyzer_buffers){
+        .reader_buffer = reader_buffer,
+        .printer_buffer = printer_buffer
+    };
+
+    return abuffs;
+}
+
+void abuffs_destroy(Analyzer_buffers* abuffs)
+{
+    free(abuffs);
+}
+
 static char* analyzer_calc(char* prev_data, char* curr_data)
 {
     if (!prev_data || !curr_data)
@@ -71,7 +100,10 @@ static char* analyzer_calc(char* prev_data, char* curr_data)
 
 void* thread_analyze(void *arg)
 {
-    Buff_sync* bs = *(Buff_sync**)arg;
+    Analyzer_buffers* buffs = *(Analyzer_buffers**)arg;
+
+    Buff_sync* rb = buffs->reader_buffer;
+    Buff_sync* pb = buffs->printer_buffer;
 
     bool done = false;
     char* prev_data = 0;
@@ -80,27 +112,28 @@ void* thread_analyze(void *arg)
     char* result_data = 0;
 
     while(!prev_data) {
-        buff_sync_lock(bs);
+        buff_sync_lock(rb);
         
-        if (buff_sync_is_empty(bs))
-            buff_sync_wait_for_producer(bs);
+        if (buff_sync_is_empty(rb))
+            buff_sync_wait_for_producer(rb);
 
-        prev_data = buff_sync_pop(bs);
+        prev_data = buff_sync_pop(rb);
 
-        buff_sync_call_producer(bs);
-        buff_sync_unlock(bs);
+        buff_sync_call_producer(rb);
+        buff_sync_unlock(rb);
     }
 
     while(!done) {
-        buff_sync_lock(bs);
+        //receive from reader
+        buff_sync_lock(rb);
         
-        if (buff_sync_is_empty(bs))
-            buff_sync_wait_for_producer(bs);
+        if (buff_sync_is_empty(rb))
+            buff_sync_wait_for_producer(rb);
 
-        curr_data = buff_sync_pop(bs);
+        curr_data = buff_sync_pop(rb);
 
-        buff_sync_call_producer(bs);
-        buff_sync_unlock(bs);
+        buff_sync_call_producer(rb);
+        buff_sync_unlock(rb);
 
         if (!curr_data)
             continue;
@@ -108,8 +141,20 @@ void* thread_analyze(void *arg)
         temp_data = strdup(curr_data);
 
         result_data = analyzer_calc(prev_data, curr_data);
-        printf("%s\n", result_data);
+        //printf("%s\n", result_data);
 
+        //send to printer
+        buff_sync_lock(pb);
+            
+        if (buff_sync_is_full(pb))
+            buff_sync_wait_for_consumer(pb);
+
+        buff_sync_append(pb, result_data, strlen(result_data));
+
+        buff_sync_call_consumer(pb);
+        buff_sync_unlock(pb);
+
+        //clean
         free(curr_data);
         curr_data = 0;
         free(prev_data);
