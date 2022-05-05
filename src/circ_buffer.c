@@ -55,11 +55,11 @@ void circ_delete(circ_buff* cb) {
 }
 
 bool circ_is_full(circ_buff* cb) {
-    return cb->len == cb->max_len;
+    return cb ? cb->len == cb->max_len : false;
 }
 
 bool circ_is_empty(circ_buff* cb) {
-    return cb->len == 0;
+    return cb ? cb->len == 0 : true;
 }
 
 size_t circ_getpos(const circ_buff* cb, size_t pos) {
