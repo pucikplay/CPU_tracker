@@ -18,15 +18,13 @@ Buff_sync* buff_sync_create(size_t max_len)
 {
     Buff_sync* new_bs = 0;
 
-    if (!max_len) {
+    if (!max_len)
         return 0;
-    }
 
     new_bs = malloc(sizeof(Buff_sync));
 
-    if (!new_bs) {
+    if (!new_bs)
         return 0;
-    }
 
     *new_bs = (Buff_sync){
                 .buffer = circ_create(max_len),

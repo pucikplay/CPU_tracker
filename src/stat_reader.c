@@ -36,9 +36,8 @@ static size_t reader_read_stat(char** buff, size_t* buff_len, FILE* stat_file)
 
     char* new_buff = realloc(*buff, length_needed + 1);
 
-    if (!new_buff) {
+    if (!new_buff)
         return 0;
-    }
 
     *buff = new_buff;
     *buff_len = length_needed;
@@ -46,9 +45,8 @@ static size_t reader_read_stat(char** buff, size_t* buff_len, FILE* stat_file)
     size_t curr_pos = 0;
 
     while (fgets(line, sizeof(line), stat_file)) {
-        if (!reader_starts_with(line, "cpu")) {
+        if (!reader_starts_with(line, "cpu"))
             break;
-        }
         
         memcpy(*buff + curr_pos, line, strlen(line));
         curr_pos += strlen(line);
@@ -106,6 +104,7 @@ void* thread_read(void *arg)
             buff_sync_call_consumer(bs);
             buff_sync_unlock(bs);
         }
+        
         fclose(stat_file);
         sleep(1);
     }

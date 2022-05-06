@@ -112,7 +112,8 @@ static char* analyzer_calc(char* prev_data, char* curr_data)
     return cpu_data;
 }
 
-static void analyzer_buffer_cleanup(void* arg) {
+static void analyzer_buffer_cleanup(void* arg)
+{
     if (!arg)
         return;
 

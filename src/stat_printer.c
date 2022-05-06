@@ -44,12 +44,23 @@ static void printer_print(char* raw_data)
     }
 }
 
+static void printer_buffer_cleanup(void* arg)
+{
+    if (!arg)
+        return;
+
+    char** buffer_to_clean = (char**) arg;
+    free(*buffer_to_clean);
+}
+
 void* thread_print(void *arg)
 {
     Buff_sync* bs = *(Buff_sync**)arg;
 
     char* cpu_data = 0;
     bool done = false;
+
+    pthread_cleanup_push(printer_buffer_cleaunp, &cpu_data)
 
     while (!done) {
         //receive from anlyzer
@@ -75,6 +86,7 @@ void* thread_print(void *arg)
         sleep(1);
     }
 
+    pthread_clenup_pop(1);
 
     return NULL;
 }
