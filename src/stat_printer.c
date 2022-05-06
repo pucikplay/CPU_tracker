@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #define FULL_BAR_LEN 66.0
 
@@ -60,7 +61,7 @@ void* thread_print(void *arg)
     char* cpu_data = 0;
     bool done = false;
 
-    pthread_cleanup_push(printer_buffer_cleaunp, &cpu_data)
+    pthread_cleanup_push(printer_buffer_cleanup, &cpu_data)
 
     while (!done) {
         //receive from anlyzer
@@ -86,7 +87,7 @@ void* thread_print(void *arg)
         sleep(1);
     }
 
-    pthread_clenup_pop(1);
+    pthread_cleanup_pop(1);
 
     return NULL;
 }

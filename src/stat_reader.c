@@ -104,7 +104,8 @@ void* thread_read(void *arg)
             buff_sync_call_consumer(bs);
             buff_sync_unlock(bs);
         }
-        
+
+        //clean
         fclose(stat_file);
         sleep(1);
     }
