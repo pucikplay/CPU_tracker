@@ -8,13 +8,13 @@
 
 #define FULL_BAR_LEN 66.0
 
-void printer_print(char* raw_data)
+static void printer_print(char* raw_data)
 {
     size_t core_count = 0;
     char** data_tokenized = analyzer_string_split(raw_data, ' ', &core_count);
 
     //clear console screen
-    printf("\e[1;1H\e[2J");
+    printf("\033[1;1H\033[2J");
 
     //print percentage scale
     printf("\t\t\t25%%\t\t50%%\t\t75%%\t\t100%%\n");

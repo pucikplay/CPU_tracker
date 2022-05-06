@@ -3,10 +3,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "stat_analyzer.h"
 #include "buffer_sync.h"
 #include "stat_utils.h"
+
+#define NUM_BASE 10
 
 struct Analyzer_buffers
 {
@@ -64,11 +67,23 @@ static char* analyzer_calc(char* prev_data, char* curr_data)
         if (!prev_line || !curr_line)
             continue;
 
-        size_t prev_idle = atoi(prev_line[4]) + atoi(prev_line[5]);
-        size_t curr_idle = atoi(curr_line[4]) + atoi(curr_line[5]);
+        size_t prev_idle = strtoul(prev_line[4], NULL, NUM_BASE) + \
+                            strtoul(prev_line[5], NULL, NUM_BASE);
+        size_t curr_idle = strtoul(curr_line[4], NULL, NUM_BASE) + \
+                            strtoul(curr_line[5], NULL, NUM_BASE);
 
-        size_t prev_active = atoi(prev_line[1]) + atoi(prev_line[2]) + atoi(prev_line[3]) + atoi(prev_line[6]) + atoi(prev_line[7]) + atoi(prev_line[8]);
-        size_t curr_active = atoi(curr_line[1]) + atoi(curr_line[2]) + atoi(curr_line[3]) + atoi(curr_line[6]) + atoi(curr_line[7]) + atoi(curr_line[8]);
+        size_t prev_active = strtoul(prev_line[1], NULL, NUM_BASE) + \
+                                strtoul(prev_line[2], NULL, NUM_BASE) + \
+                                strtoul(prev_line[3], NULL, NUM_BASE) + \
+                                strtoul(prev_line[6], NULL, NUM_BASE) + \
+                                strtoul(prev_line[7], NULL, NUM_BASE) + \
+                                strtoul(prev_line[8], NULL, NUM_BASE);
+        size_t curr_active = strtoul(curr_line[1], NULL, NUM_BASE) + \
+                                strtoul(curr_line[2], NULL, NUM_BASE) + \
+                                strtoul(curr_line[3], NULL, NUM_BASE) + \
+                                strtoul(curr_line[6], NULL, NUM_BASE) + \
+                                strtoul(curr_line[7], NULL, NUM_BASE) + \
+                                strtoul(curr_line[8], NULL, NUM_BASE);
 
         size_t prev_total = prev_idle + prev_active;
         size_t curr_total = curr_idle + curr_active;
@@ -97,6 +112,14 @@ static char* analyzer_calc(char* prev_data, char* curr_data)
     return cpu_data;
 }
 
+static void analyzer_buffer_cleanup(void* arg) {
+    if (!arg)
+        return;
+
+    char** buffer_to_clean = (char**) arg;
+    free(*buffer_to_clean);
+}
+
 
 void* thread_analyze(void *arg)
 {
@@ -110,6 +133,11 @@ void* thread_analyze(void *arg)
     char* curr_data = 0;
     char* temp_data = 0;
     char* result_data = 0;
+
+    pthread_cleanup_push(analyzer_buffer_cleanup, &prev_data)
+    pthread_cleanup_push(analyzer_buffer_cleanup, &curr_data)
+    pthread_cleanup_push(analyzer_buffer_cleanup, &temp_data)
+    pthread_cleanup_push(analyzer_buffer_cleanup, &result_data)
 
     while(!prev_data) {
         buff_sync_lock(rb);
@@ -166,6 +194,11 @@ void* thread_analyze(void *arg)
         result_data = 0;
         sleep(1);
     }
+
+    pthread_cleanup_pop(1);
+    pthread_cleanup_pop(1);
+    pthread_cleanup_pop(1);
+    pthread_cleanup_pop(1);
 
     return NULL;
 }

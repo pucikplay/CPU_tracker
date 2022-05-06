@@ -1,2 +1,19 @@
-testing:
-	gcc -g3 -Wall -Wextra -Iinc -o testing.out ./test/test.c ./src/*.c -pthread
+RM := rm -rf
+
+SRC := $(wildcard ./src/*.c)
+
+CC ?= gcc
+
+C_FLAGS := -Wall -Wextra
+
+ifeq ($(CC),clang)
+	C_FLAGS += -Weverything
+endif
+
+all: main.out
+
+main.out:
+	$(CC) $(C_FLAGS) -Iinc ./app/main.c $(SRC) -o $@ -pthread
+
+clean:
+	$(RM) main.out

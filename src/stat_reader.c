@@ -4,9 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "buffer_sync.h"
 #include "stat_utils.h"
+#include "stat_reader.h"
 
 #define STAT_PATH "/proc/stat"
 #define LINE_LENGTH 256U
@@ -57,6 +59,27 @@ static size_t reader_read_stat(char** buff, size_t* buff_len, FILE* stat_file)
     return cpu_counter;
 }
 
+static void reader_buffer_cleanup(void* arg)
+{
+    if (!arg)
+        return;
+
+    char** buffer_to_clean = (char**) arg;
+    free(*buffer_to_clean);
+}
+
+static void reader_file_cleanup(void* arg)
+{
+    if (!arg)
+        return;
+
+    FILE** file_to_clean = (FILE**) arg;
+    if (!*file_to_clean)
+        return;
+
+    fclose(*file_to_clean);
+}
+
 void* thread_read(void *arg)
 {
     Buff_sync* bs = *(Buff_sync**)arg;
@@ -65,6 +88,9 @@ void* thread_read(void *arg)
     size_t buff_size = 0;
     FILE* stat_file;
     bool done = false;
+
+    pthread_cleanup_push(reader_buffer_cleanup, &buff)
+    pthread_cleanup_push(reader_file_cleanup, &stat_file)
 
     while (!done) {
         stat_file = fopen(STAT_PATH, "r");
@@ -84,7 +110,8 @@ void* thread_read(void *arg)
         sleep(1);
     }
 
-    free(buff);
+    pthread_cleanup_pop(1);
+    pthread_cleanup_pop(1);
 
     return NULL;
 

@@ -12,7 +12,7 @@ struct circ_buff {
     char** arr;
 };
 
-circ_buff* circ_init(circ_buff* const cb, const size_t max_len) {
+static circ_buff* circ_init(circ_buff* const cb, const size_t max_len) {
     if (!cb) {
         return 0;
     }
@@ -35,7 +35,7 @@ circ_buff* circ_create(size_t max_len) {
     return circ_init(malloc(sizeof(circ_buff)), max_len); 
 }
 
-void circ_remove_arr(circ_buff* cb) {
+static void circ_remove_arr(circ_buff* cb) {
     size_t i = cb->start;
     size_t counter = 0;
     while (counter < cb->len) {
@@ -47,7 +47,7 @@ void circ_remove_arr(circ_buff* cb) {
     free(cb->arr);
 }
 
-void circ_delete(circ_buff* cb) {
+void circ_destroy(circ_buff* cb) {
     if (cb) {
         circ_remove_arr(cb);
     }
@@ -62,13 +62,13 @@ bool circ_is_empty(circ_buff* cb) {
     return cb ? cb->len == 0 : true;
 }
 
-size_t circ_getpos(const circ_buff* cb, size_t pos) {
+static size_t circ_getpos(const circ_buff* cb, size_t pos) {
     pos += cb->start;
     pos %= cb->max_len;
     return pos;
 }
 
-char** circ_getelem(const circ_buff* cb, const size_t pos) {
+static char** circ_getelem(const circ_buff* cb, const size_t pos) {
     if (pos >= cb->max_len) {
         return 0;
     }

@@ -47,7 +47,7 @@ Buff_sync* buff_sync_create(size_t max_len)
 
 void buff_sync_destroy(Buff_sync* bs)
 {
-    circ_delete(bs->buffer);
+    circ_destroy(bs->buffer);
     pthread_mutex_destroy(&bs->mutex);
     pthread_cond_destroy(&bs->can_append);
     pthread_cond_destroy(&bs->can_pop);
