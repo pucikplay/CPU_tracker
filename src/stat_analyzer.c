@@ -180,9 +180,7 @@ void* thread_analyze(void *arg)
         temp_data = strdup(curr_data);
 
         result_data = analyzer_calc(prev_data, curr_data);
-        //printf("%s\n", result_data);
 
-        //send to printer
         buff_sync_lock(pb);
             
         if (buff_sync_is_full(pb))
@@ -193,7 +191,6 @@ void* thread_analyze(void *arg)
         buff_sync_call_consumer(pb);
         buff_sync_unlock(pb);
 
-        //clean
         free(curr_data);
         curr_data = 0;
         free(prev_data);
@@ -203,7 +200,6 @@ void* thread_analyze(void *arg)
 
         free(result_data);
         result_data = 0;
-        sleep(1);
     }
 
     pthread_cleanup_pop(1);

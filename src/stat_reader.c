@@ -13,6 +13,7 @@
 
 #define STAT_PATH "/proc/stat"
 #define LINE_LENGTH 256U
+#define READER_SLEEP_TIME 1U
 
 struct Reader_args
 {
@@ -104,6 +105,7 @@ static void reader_file_cleanup(void* arg)
         return;
 
     FILE** file_to_clean = (FILE**) arg;
+
     if (!*file_to_clean)
         return;
 
@@ -117,7 +119,7 @@ void* thread_read(void *arg)
     Buff_sync* bs = rargs->analyzer_buffer;
 
     volatile sig_atomic_t* done = tstop_get_analyzer(rargs->stop_controller);
-    tcheck_analyzer_activate(rargs->work_controller);
+    tcheck_reader_activate(rargs->work_controller);
 
     char* buff = 0;
     size_t buff_size = 0;
@@ -127,8 +129,9 @@ void* thread_read(void *arg)
     pthread_cleanup_push(reader_file_cleanup, &stat_file)
 
     while (!*done) {
-        tcheck_analyzer_activate(rargs->work_controller);
-        
+        tcheck_reader_activate(rargs->work_controller);
+        sleep(READER_SLEEP_TIME);
+
         stat_file = fopen(STAT_PATH, "r");
 
         if (stat_file && reader_read_stat(&buff, &buff_size, stat_file)) {
@@ -144,8 +147,10 @@ void* thread_read(void *arg)
         }
 
         //close file
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         fclose(stat_file);
-        sleep(1);
+        stat_file = 0;
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     }
 
     pthread_cleanup_pop(1);

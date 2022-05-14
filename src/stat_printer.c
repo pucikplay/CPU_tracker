@@ -8,6 +8,7 @@
 #include <pthread.h>
 
 #define FULL_BAR_LEN 66.0
+#define CLEAR_STDOUT() printf("\033[1;1H\033[2J")
 
 struct Printer_args
 {
@@ -45,10 +46,8 @@ static void printer_print(char* raw_data)
     size_t core_count = 0;
     char** data_tokenized = analyzer_string_split(raw_data, ' ', &core_count);
 
-    //clear console screen
-    printf("\033[1;1H\033[2J");
+    CLEAR_STDOUT();
 
-    //print percentage scale
     printf("\t\t\t25%%\t\t50%%\t\t75%%\t\t100%%\n");
     
     printf("CPU:\t");
@@ -92,16 +91,15 @@ void* thread_print(void *arg)
     Buff_sync* bs = pargs->analyzer_buffer;
 
     volatile sig_atomic_t* done = tstop_get_analyzer(pargs->stop_controller);
-    tcheck_analyzer_activate(pargs->work_controller);
+    tcheck_printer_activate(pargs->work_controller);
 
     char* cpu_data = 0;
 
     pthread_cleanup_push(printer_buffer_cleanup, &cpu_data)
 
     while (!*done) {
-        tcheck_analyzer_activate(pargs->work_controller);
+        tcheck_printer_activate(pargs->work_controller);
 
-        //receive from anlyzer
         buff_sync_lock(bs);
         
         if (buff_sync_is_empty(bs))
@@ -115,13 +113,10 @@ void* thread_print(void *arg)
         if (!cpu_data)
             continue;
         
-        //print the data
         printer_print(cpu_data);
 
-        //clean
         free(cpu_data);
         cpu_data = 0;
-        sleep(1);
     }
 
     pthread_cleanup_pop(1);
