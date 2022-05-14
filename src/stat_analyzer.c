@@ -8,6 +8,7 @@
 #include "stat_analyzer.h"
 #include "buffer_sync.h"
 #include "stat_utils.h"
+#include "stat_control.h"
 
 #define NUM_BASE 10
 
@@ -15,21 +16,25 @@ struct Analyzer_args
 {
     Buff_sync* reader_buffer;
     Buff_sync* printer_buffer;
+    Thread_checkers* work_controller;
+    Thread_stoppers* stop_controller;
 };
 
-Analyzer_args* aargs_create(Buff_sync* reader_buffer, Buff_sync* printer_buffer)
+Analyzer_args* aargs_create(Buff_sync* reader_buffer, Buff_sync* printer_buffer, Thread_checkers* work_controller, Thread_stoppers* stop_controller)
 {
-    if (!reader_buffer || !printer_buffer)
+    if (!reader_buffer || !printer_buffer || !work_controller || !stop_controller)
         return 0;
 
-    Analyzer_args* aargs = malloc(sizeof(Analyzer_args));
+    Analyzer_args* aargs = malloc(sizeof(*aargs));
 
     if (!aargs)
         return 0;
 
     *aargs = (Analyzer_args){
         .reader_buffer = reader_buffer,
-        .printer_buffer = printer_buffer
+        .printer_buffer = printer_buffer,
+        .work_controller = work_controller,
+        .stop_controller = stop_controller,
     };
 
     return aargs;
@@ -129,7 +134,9 @@ void* thread_analyze(void *arg)
     Buff_sync* rb = aargs->reader_buffer;
     Buff_sync* pb = aargs->printer_buffer;
 
-    bool done = false;
+    volatile sig_atomic_t* done = tstop_get_analyzer(aargs->stop_controller);
+    tcheck_analyzer_activate(aargs->work_controller);
+
     char* prev_data = 0;
     char* curr_data = 0;
     char* temp_data = 0;
@@ -141,6 +148,7 @@ void* thread_analyze(void *arg)
     pthread_cleanup_push(analyzer_buffer_cleanup, &result_data)
 
     while(!prev_data) {
+        tcheck_analyzer_activate(aargs->work_controller);
         buff_sync_lock(rb);
         
         if (buff_sync_is_empty(rb))
@@ -152,7 +160,9 @@ void* thread_analyze(void *arg)
         buff_sync_unlock(rb);
     }
 
-    while(!done) {
+    while(!*done) {
+        tcheck_analyzer_activate(aargs->work_controller);
+
         //receive from reader
         buff_sync_lock(rb);
         

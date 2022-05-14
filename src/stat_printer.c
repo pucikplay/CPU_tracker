@@ -12,20 +12,24 @@
 struct Printer_args
 {
     Buff_sync* analyzer_buffer;
+    Thread_checkers* work_controller;
+    Thread_stoppers* stop_controller;
 };
 
-Printer_args* pargs_create(Buff_sync* analyzer_buffer)
+Printer_args* pargs_create(Buff_sync* analyzer_buffer, Thread_checkers* work_controller, Thread_stoppers* stop_controller)
 {
-    if (!analyzer_buffer)
+    if (!analyzer_buffer || !work_controller || !stop_controller)
         return 0;
 
-    Printer_args* pargs = malloc(sizeof(Printer_args));
+    Printer_args* pargs = malloc(sizeof(*pargs));
 
     if (!pargs)
         return 0;
 
     *pargs = (Printer_args){
         .analyzer_buffer = analyzer_buffer,
+        .work_controller = work_controller,
+        .stop_controller = stop_controller,
     };
 
     return pargs;
@@ -87,12 +91,16 @@ void* thread_print(void *arg)
 
     Buff_sync* bs = pargs->analyzer_buffer;
 
+    volatile sig_atomic_t* done = tstop_get_analyzer(pargs->stop_controller);
+    tcheck_analyzer_activate(pargs->work_controller);
+
     char* cpu_data = 0;
-    bool done = false;
 
     pthread_cleanup_push(printer_buffer_cleanup, &cpu_data)
 
-    while (!done) {
+    while (!*done) {
+        tcheck_analyzer_activate(pargs->work_controller);
+
         //receive from anlyzer
         buff_sync_lock(bs);
         
