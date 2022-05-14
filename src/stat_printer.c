@@ -9,6 +9,33 @@
 
 #define FULL_BAR_LEN 66.0
 
+struct Printer_args
+{
+    Buff_sync* analyzer_buffer;
+};
+
+Printer_args* pargs_create(Buff_sync* analyzer_buffer)
+{
+    if (!analyzer_buffer)
+        return 0;
+
+    Printer_args* pargs = malloc(sizeof(Printer_args));
+
+    if (!pargs)
+        return 0;
+
+    *pargs = (Printer_args){
+        .analyzer_buffer = analyzer_buffer,
+    };
+
+    return pargs;
+}
+
+void pargs_destroy(Printer_args* pargs)
+{
+    free(pargs);
+}
+
 static void printer_print(char* raw_data)
 {
     size_t core_count = 0;
@@ -56,7 +83,9 @@ static void printer_buffer_cleanup(void* arg)
 
 void* thread_print(void *arg)
 {
-    Buff_sync* bs = *(Buff_sync**)arg;
+    Printer_args* pargs = *(Printer_args**)arg;
+
+    Buff_sync* bs = pargs->analyzer_buffer;
 
     char* cpu_data = 0;
     bool done = false;

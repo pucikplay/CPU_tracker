@@ -13,6 +13,33 @@
 #define STAT_PATH "/proc/stat"
 #define LINE_LENGTH 256U
 
+struct Reader_args
+{
+    Buff_sync* analyzer_buffer;
+};
+
+Reader_args* rargs_create(Buff_sync* analyzer_buffer)
+{
+    if (!analyzer_buffer)
+        return 0;
+
+    Reader_args* rargs = malloc(sizeof(Reader_args));
+
+    if (!rargs)
+        return 0;
+
+    *rargs = (Reader_args){
+        .analyzer_buffer = analyzer_buffer,
+    };
+
+    return rargs;
+}
+
+void rargs_destroy(Reader_args* rargs)
+{
+    free(rargs);
+}
+
 static size_t reader_read_stat(char** buff, size_t* buff_len, FILE* stat_file)
 {
     if (!stat_file || !buff) {
@@ -80,7 +107,9 @@ static void reader_file_cleanup(void* arg)
 
 void* thread_read(void *arg)
 {
-    Buff_sync* bs = *(Buff_sync**)arg;
+    Reader_args* rargs = *(Reader_args**)arg;
+
+    Buff_sync* bs = rargs->analyzer_buffer;
 
     char* buff = 0;
     size_t buff_size = 0;
@@ -105,7 +134,7 @@ void* thread_read(void *arg)
             buff_sync_unlock(bs);
         }
 
-        //clean
+        //close file
         fclose(stat_file);
         sleep(1);
     }
