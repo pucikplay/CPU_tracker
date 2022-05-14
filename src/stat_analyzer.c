@@ -11,33 +11,33 @@
 
 #define NUM_BASE 10
 
-struct Analyzer_buffers
+struct Analyzer_args
 {
     Buff_sync* reader_buffer;
     Buff_sync* printer_buffer;
 };
 
-Analyzer_buffers* abuffs_create(Buff_sync* reader_buffer, Buff_sync* printer_buffer)
+Analyzer_args* aargs_create(Buff_sync* reader_buffer, Buff_sync* printer_buffer)
 {
     if (!reader_buffer || !printer_buffer)
         return 0;
 
-    Analyzer_buffers* abuffs = malloc(sizeof(Analyzer_buffers));
+    Analyzer_args* aargs = malloc(sizeof(Analyzer_args));
 
-    if (!abuffs)
+    if (!aargs)
         return 0;
 
-    *abuffs = (Analyzer_buffers){
+    *aargs = (Analyzer_args){
         .reader_buffer = reader_buffer,
         .printer_buffer = printer_buffer
     };
 
-    return abuffs;
+    return aargs;
 }
 
-void abuffs_destroy(Analyzer_buffers* abuffs)
+void aargs_destroy(Analyzer_args* aargs)
 {
-    free(abuffs);
+    free(aargs);
 }
 
 static char* analyzer_calc(char* prev_data, char* curr_data)
@@ -124,10 +124,10 @@ static void analyzer_buffer_cleanup(void* arg)
 
 void* thread_analyze(void *arg)
 {
-    Analyzer_buffers* buffs = *(Analyzer_buffers**)arg;
+    Analyzer_args* aargs = *(Analyzer_args**)arg;
 
-    Buff_sync* rb = buffs->reader_buffer;
-    Buff_sync* pb = buffs->printer_buffer;
+    Buff_sync* rb = aargs->reader_buffer;
+    Buff_sync* pb = aargs->printer_buffer;
 
     bool done = false;
     char* prev_data = 0;
