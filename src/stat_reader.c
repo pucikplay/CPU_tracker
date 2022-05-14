@@ -135,15 +135,7 @@ void* thread_read(void *arg)
         stat_file = fopen(STAT_PATH, "r");
 
         if (stat_file && reader_read_stat(&buff, &buff_size, stat_file)) {
-            buff_sync_lock(bs);
-            
-            if (buff_sync_is_full(bs))
-                buff_sync_wait_for_consumer(bs);
-
-            buff_sync_append(bs, buff, buff_size);
-
-            buff_sync_call_consumer(bs);
-            buff_sync_unlock(bs);
+            BUFFSYNC_APPEND_STRING(bs, buff);
         }
 
         //close file

@@ -163,16 +163,7 @@ void* thread_analyze(void *arg)
     while(!*done) {
         tcheck_analyzer_activate(aargs->work_controller);
 
-        //receive from reader
-        buff_sync_lock(rb);
-        
-        if (buff_sync_is_empty(rb))
-            buff_sync_wait_for_producer(rb);
-
-        curr_data = buff_sync_pop(rb);
-
-        buff_sync_call_producer(rb);
-        buff_sync_unlock(rb);
+        BUFFSYNC_POP_STRING(rb, curr_data);
 
         if (!curr_data)
             continue;
@@ -181,15 +172,7 @@ void* thread_analyze(void *arg)
 
         result_data = analyzer_calc(prev_data, curr_data);
 
-        buff_sync_lock(pb);
-            
-        if (buff_sync_is_full(pb))
-            buff_sync_wait_for_consumer(pb);
-
-        buff_sync_append(pb, result_data, strlen(result_data));
-
-        buff_sync_call_consumer(pb);
-        buff_sync_unlock(pb);
+        BUFFSYNC_APPEND_STRING(pb, result_data);
 
         free(curr_data);
         curr_data = 0;

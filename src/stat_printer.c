@@ -100,15 +100,7 @@ void* thread_print(void *arg)
     while (!*done) {
         tcheck_printer_activate(pargs->work_controller);
 
-        buff_sync_lock(bs);
-        
-        if (buff_sync_is_empty(bs))
-            buff_sync_wait_for_producer(bs);
-
-        cpu_data = buff_sync_pop(bs);
-
-        buff_sync_call_producer(bs);
-        buff_sync_unlock(bs);
+        BUFFSYNC_POP_STRING(bs, cpu_data);
 
         if (!cpu_data)
             continue;
