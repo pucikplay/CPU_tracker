@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdatomic.h>
+#include <stdio.h>
 
 #include "stat_control.h"
 
@@ -11,7 +12,7 @@ struct Thread_stoppers {
     volatile sig_atomic_t printer_done;
 };
 
-Thread_stoppers* tstop_create()
+Thread_stoppers* tstop_create(void)
 {
     Thread_stoppers* tstop = malloc(sizeof(*tstop));
     if (!tstop)
@@ -62,7 +63,7 @@ struct Thread_checkers {
     atomic_bool printer_active;
 };
 
-Thread_checkers* tcheck_create()
+Thread_checkers* tcheck_create(void)
 {
     Thread_checkers* tcheck = malloc(sizeof(*tcheck));
     if (!tcheck)
