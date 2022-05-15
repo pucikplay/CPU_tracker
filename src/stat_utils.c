@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-char** analyzer_string_split(char* restrict data, const char delimiter, size_t* token_count)
+char** util_str_split(char* restrict data, const char delimiter, size_t* token_count)
 {
     if (!data)
         return 0;
@@ -32,9 +32,19 @@ char** analyzer_string_split(char* restrict data, const char delimiter, size_t* 
         token = strtok(0, delim);
         ++idx;
     }
+    free(token);
+
     *token_count = idx;
 
     return result;
+}
+
+void util_split_cleanup(char** data_tokenized, size_t token_count)
+{
+    for (size_t i = 0; i < token_count; ++i) {
+        free(data_tokenized[i]);
+    }
+    free(data_tokenized);
 }
 
 char* util_str_concat(char const* restrict str1, char const* restrict str2)
