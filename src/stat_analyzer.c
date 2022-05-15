@@ -51,8 +51,8 @@ static char* analyzer_calc(char* prev_data, char* curr_data)
         return 0;
 
     size_t core_count = 0;
-    char** prev_data_tokenized = analyzer_string_split(prev_data, '\n', &core_count);
-    char** curr_data_tokenized = analyzer_string_split(curr_data, '\n', &core_count);
+    char** prev_data_tokenized = util_str_split(prev_data, '\n', &core_count);
+    char** curr_data_tokenized = util_str_split(curr_data, '\n', &core_count);
 
     if (!prev_data_tokenized || !curr_data_tokenized)
         return 0;
@@ -66,8 +66,8 @@ static char* analyzer_calc(char* prev_data, char* curr_data)
     
     for (size_t i = 0; i < core_count; i++) {
         size_t number_count = 0;
-        char** prev_line = analyzer_string_split(prev_data_tokenized[i], ' ', &number_count);
-        char** curr_line = analyzer_string_split(curr_data_tokenized[i], ' ', &number_count);
+        char** prev_line = util_str_split(prev_data_tokenized[i], ' ', &number_count);
+        char** curr_line = util_str_split(curr_data_tokenized[i], ' ', &number_count);
 
         if (!prev_line || !curr_line)
             continue;
@@ -105,14 +105,12 @@ static char* analyzer_calc(char* prev_data, char* curr_data)
         free(cpu_data);
         cpu_data = mid_result_str;
 
-        free(prev_line);
-        free(curr_line);
+        util_split_cleanup(prev_line, number_count);
+        util_split_cleanup(curr_line, number_count);
     }
 
-    for (size_t i = 0; i < core_count; ++i) {
-        free(prev_data_tokenized[i]);
-        free(curr_data_tokenized[i]); 
-    }
+    util_split_cleanup(prev_data_tokenized, core_count);
+    util_split_cleanup(curr_data_tokenized, core_count);
 
     return cpu_data;
 }

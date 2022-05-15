@@ -44,7 +44,7 @@ void pargs_destroy(Printer_args* pargs)
 static void printer_print(char* raw_data)
 {
     size_t core_count = 0;
-    char** data_tokenized = analyzer_string_split(raw_data, ' ', &core_count);
+    char** data_tokenized = util_str_split(raw_data, ' ', &core_count);
 
     CLEAR_STDOUT();
 
@@ -70,9 +70,7 @@ static void printer_print(char* raw_data)
         putchar('\n');
     }
 
-    for (size_t i = 0; i < core_count; ++i) {
-        free(data_tokenized[i]);
-    }
+    util_split_cleanup(data_tokenized, core_count);
 }
 
 static void printer_buffer_cleanup(void* arg)
