@@ -16,13 +16,14 @@ struct Analyzer_args
 {
     Buff_sync* reader_buffer;
     Buff_sync* printer_buffer;
+    Buff_sync* logger_buffer;
     Thread_checkers* work_controller;
     Thread_stoppers* stop_controller;
 };
 
-Analyzer_args* aargs_create(Buff_sync* reader_buffer, Buff_sync* printer_buffer, Thread_checkers* work_controller, Thread_stoppers* stop_controller)
+Analyzer_args* aargs_create(Buff_sync* reader_buffer, Buff_sync* logger_buffer, Buff_sync* printer_buffer, Thread_checkers* work_controller, Thread_stoppers* stop_controller)
 {
-    if (!reader_buffer || !printer_buffer || !work_controller || !stop_controller)
+    if (!reader_buffer || !printer_buffer || !logger_buffer || !work_controller || !stop_controller)
         return 0;
 
     Analyzer_args* aargs = malloc(sizeof(*aargs));
@@ -33,6 +34,7 @@ Analyzer_args* aargs_create(Buff_sync* reader_buffer, Buff_sync* printer_buffer,
     *aargs = (Analyzer_args){
         .reader_buffer = reader_buffer,
         .printer_buffer = printer_buffer,
+        .logger_buffer = logger_buffer,
         .work_controller = work_controller,
         .stop_controller = stop_controller,
     };
@@ -131,6 +133,7 @@ void* thread_analyze(void *arg)
 
     Buff_sync* rb = aargs->reader_buffer;
     Buff_sync* pb = aargs->printer_buffer;
+    Buff_sync* lb = aargs->logger_buffer;
 
     volatile sig_atomic_t* done = tstop_get_analyzer(aargs->stop_controller);
     tcheck_analyzer_activate(aargs->work_controller);
@@ -145,17 +148,12 @@ void* thread_analyze(void *arg)
     pthread_cleanup_push(analyzer_buffer_cleanup, &temp_data)
     pthread_cleanup_push(analyzer_buffer_cleanup, &result_data)
 
+    BUFFSYNC_APPEND_STRING(lb, "Analyzer thread initialized");
+
     while(!prev_data) {
         tcheck_analyzer_activate(aargs->work_controller);
-        buff_sync_lock(rb);
         
-        if (buff_sync_is_empty(rb))
-            buff_sync_wait_for_producer(rb);
-
-        prev_data = buff_sync_pop(rb);
-
-        buff_sync_call_producer(rb);
-        buff_sync_unlock(rb);
+        BUFFSYNC_POP_STRING(rb, prev_data);
     }
 
     while(!*done) {
@@ -173,15 +171,17 @@ void* thread_analyze(void *arg)
         BUFFSYNC_APPEND_STRING(pb, result_data);
 
         free(curr_data);
-        curr_data = 0;
+        curr_data = NULL;
         free(prev_data);
         prev_data = strdup(temp_data);
         free(temp_data);
-        temp_data = 0;
+        temp_data = NULL;
 
         free(result_data);
-        result_data = 0;
+        result_data = NULL;
     }
+
+    BUFFSYNC_APPEND_STRING(lb, "Analyzer thread done");
 
     pthread_cleanup_pop(1);
     pthread_cleanup_pop(1);

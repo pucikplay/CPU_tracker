@@ -18,13 +18,14 @@
 struct Reader_args
 {
     Buff_sync* analyzer_buffer;
+    Buff_sync* logger_buffer;
     Thread_checkers* work_controller;
     Thread_stoppers* stop_controller;
 };
 
-Reader_args* rargs_create(Buff_sync* analyzer_buffer, Thread_checkers* work_controller, Thread_stoppers* stop_controller)
+Reader_args* rargs_create(Buff_sync* analyzer_buffer, Buff_sync* logger_buffer, Thread_checkers* work_controller, Thread_stoppers* stop_controller)
 {
-    if (!analyzer_buffer || !work_controller || !stop_controller)
+    if (!analyzer_buffer || !logger_buffer || !work_controller || !stop_controller)
         return 0;
 
     Reader_args* rargs = malloc(sizeof(*rargs));
@@ -34,6 +35,7 @@ Reader_args* rargs_create(Buff_sync* analyzer_buffer, Thread_checkers* work_cont
 
     *rargs = (Reader_args){
         .analyzer_buffer = analyzer_buffer,
+        .logger_buffer = logger_buffer,
         .work_controller = work_controller,
         .stop_controller = stop_controller,
     };
@@ -116,7 +118,8 @@ void* thread_read(void *arg)
 {
     Reader_args* rargs = *(Reader_args**)arg;
 
-    Buff_sync* bs = rargs->analyzer_buffer;
+    Buff_sync* ab = rargs->analyzer_buffer;
+    Buff_sync* lb = rargs->logger_buffer;
 
     volatile sig_atomic_t* done = tstop_get_analyzer(rargs->stop_controller);
     tcheck_reader_activate(rargs->work_controller);
@@ -128,6 +131,8 @@ void* thread_read(void *arg)
     pthread_cleanup_push(reader_buffer_cleanup, &buff)
     pthread_cleanup_push(reader_file_cleanup, &stat_file)
 
+    BUFFSYNC_APPEND_STRING(lb, "Reader thread initialized");
+
     while (!*done) {
         tcheck_reader_activate(rargs->work_controller);
         sleep(READER_SLEEP_TIME);
@@ -135,15 +140,16 @@ void* thread_read(void *arg)
         stat_file = fopen(STAT_PATH, "r");
 
         if (stat_file && reader_read_stat(&buff, &buff_size, stat_file)) {
-            BUFFSYNC_APPEND_STRING(bs, buff);
+            BUFFSYNC_APPEND_STRING(ab, buff);
         }
 
-        //close file
         pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         fclose(stat_file);
-        stat_file = 0;
+        stat_file = NULL;
         pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
     }
+
+    BUFFSYNC_APPEND_STRING(lb, "Reader thread done");
 
     pthread_cleanup_pop(1);
     pthread_cleanup_pop(1);

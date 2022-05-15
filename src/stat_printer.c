@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <pthread.h>
 
@@ -13,13 +14,14 @@
 struct Printer_args
 {
     Buff_sync* analyzer_buffer;
+    Buff_sync* logger_buffer;
     Thread_checkers* work_controller;
     Thread_stoppers* stop_controller;
 };
 
-Printer_args* pargs_create(Buff_sync* analyzer_buffer, Thread_checkers* work_controller, Thread_stoppers* stop_controller)
+Printer_args* pargs_create(Buff_sync* analyzer_buffer, Buff_sync* logger_buffer, Thread_checkers* work_controller, Thread_stoppers* stop_controller)
 {
-    if (!analyzer_buffer || !work_controller || !stop_controller)
+    if (!analyzer_buffer || !logger_buffer || !work_controller || !stop_controller)
         return 0;
 
     Printer_args* pargs = malloc(sizeof(*pargs));
@@ -29,6 +31,7 @@ Printer_args* pargs_create(Buff_sync* analyzer_buffer, Thread_checkers* work_con
 
     *pargs = (Printer_args){
         .analyzer_buffer = analyzer_buffer,
+        .logger_buffer = logger_buffer,
         .work_controller = work_controller,
         .stop_controller = stop_controller,
     };
@@ -86,7 +89,8 @@ void* thread_print(void *arg)
 {
     Printer_args* pargs = *(Printer_args**)arg;
 
-    Buff_sync* bs = pargs->analyzer_buffer;
+    Buff_sync* ab = pargs->analyzer_buffer;
+    Buff_sync* lb = pargs->logger_buffer;
 
     volatile sig_atomic_t* done = tstop_get_analyzer(pargs->stop_controller);
     tcheck_printer_activate(pargs->work_controller);
@@ -95,10 +99,12 @@ void* thread_print(void *arg)
 
     pthread_cleanup_push(printer_buffer_cleanup, &cpu_data)
 
+    BUFFSYNC_APPEND_STRING(lb, "Printer thread initialized");
+
     while (!*done) {
         tcheck_printer_activate(pargs->work_controller);
 
-        BUFFSYNC_POP_STRING(bs, cpu_data);
+        BUFFSYNC_POP_STRING(ab, cpu_data);
 
         if (!cpu_data)
             continue;
@@ -106,8 +112,10 @@ void* thread_print(void *arg)
         printer_print(cpu_data);
 
         free(cpu_data);
-        cpu_data = 0;
+        cpu_data = NULL;
     }
+
+    BUFFSYNC_APPEND_STRING(lb, "Printer thread done");
 
     pthread_cleanup_pop(1);
 

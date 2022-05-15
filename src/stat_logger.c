@@ -58,6 +58,7 @@ void* thread_logger(void* arg)
 
         fprintf(log_file, "%s\n", log);
         free(log);
+        log = NULL;
     }
 
     pthread_cleanup_pop(1);

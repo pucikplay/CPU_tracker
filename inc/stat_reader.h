@@ -6,7 +6,7 @@
 
 typedef struct Reader_args Reader_args;
 
-Reader_args* rargs_create(Buff_sync* analyzer_buffer, Thread_checkers* work_controller, Thread_stoppers* stop_controller);
+Reader_args* rargs_create(Buff_sync* analyzer_buffer, Buff_sync* logger_buffer, Thread_checkers* work_controller, Thread_stoppers* stop_controller);
 void rargs_destroy(Reader_args* rargs);
 void* thread_read(void *arg);
 
