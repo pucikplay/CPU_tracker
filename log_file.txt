@@ -1,0 +1,6 @@
+Reader thread initialized
+Printer thread initialized
+Analyzer thread initialized
+Reader thread done
+Analyzer thread done
+Printer thread done

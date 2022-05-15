@@ -57,17 +57,17 @@ static void printer_print(char* raw_data)
 
     size_t bar_length = (size_t)(FULL_BAR_LEN * (atof(data_tokenized[0]) / 100.0));
 
-    for (size_t i = 0; i < bar_length; ++i) {
+    for (size_t i = 0; i < bar_length; i++) {
         putchar('=');
     }
     putchar('\n');
 
-    for (size_t i = 1; i < core_count; ++i) {
+    for (size_t i = 1; i < core_count; i++) {
         printf("CPU %ld:\t", i - 1);
 
         bar_length = (size_t)(FULL_BAR_LEN * (atof(data_tokenized[i]) / 100.0));
 
-        for (size_t j = 0; j < bar_length; ++j) {
+        for (size_t j = 0; j < bar_length; j++) {
             putchar('=');
         }
         putchar('\n');

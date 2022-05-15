@@ -40,7 +40,7 @@ char** util_str_split(char* restrict data, const char delimiter, size_t* token_c
 
 void util_split_cleanup(char** data_tokenized, size_t token_count)
 {
-    for (size_t i = 0; i < token_count; ++i) {
+    for (size_t i = 0; i < token_count; i++) {
         free(data_tokenized[i]);
     }
     free(data_tokenized);
