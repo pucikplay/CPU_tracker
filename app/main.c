@@ -13,7 +13,7 @@
 #include "stat_logger.h"
 
 #define THREADS_NUM 3U
-#define LOG_FILE "../log_file.txt"
+#define LOG_FILE "./log_file.txt"
 
 static Thread_stoppers* stop_controller;
 
@@ -38,9 +38,9 @@ int main()
     Buff_sync* analyzer_printer_buffer = buff_sync_create(10);
     Buff_sync* logger_buffer = buff_sync_create(30);
 
-    Reader_args* rargs = rargs_create(reader_analyzer_buffer, work_controller, stop_controller);
-    Analyzer_args* aargs = aargs_create(reader_analyzer_buffer, analyzer_printer_buffer, work_controller, stop_controller);
-    Printer_args* pargs = pargs_create(analyzer_printer_buffer, work_controller, stop_controller);
+    Reader_args* rargs = rargs_create(reader_analyzer_buffer, logger_buffer, work_controller, stop_controller);
+    Analyzer_args* aargs = aargs_create(reader_analyzer_buffer, logger_buffer, analyzer_printer_buffer, work_controller, stop_controller);
+    Printer_args* pargs = pargs_create(analyzer_printer_buffer, logger_buffer, work_controller, stop_controller);
 
     pthread_t reader, analyzer, printer;
     pthread_t watchdog = { 0, };
@@ -51,7 +51,7 @@ int main()
     pthread_create(&printer, NULL, thread_print, (void*)&pargs);
 
     FILE* log_file = fopen(LOG_FILE, "w");
-    Logger_args* largs = 0;
+    Logger_args* largs = NULL;
     if (log_file) {
         largs = largs_create(logger_buffer, log_file);
     } else {
@@ -74,6 +74,7 @@ int main()
     pthread_join(watchdog, NULL);
     pthread_join(logger, NULL);
 
+    if(log_file) fclose(log_file);
     buff_sync_destroy(reader_analyzer_buffer);
     buff_sync_destroy(analyzer_printer_buffer);
     buff_sync_destroy(logger_buffer);
