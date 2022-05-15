@@ -17,7 +17,7 @@ static Thread_stoppers* stop_controller;
 
 static void term_all_threads(int signum)
 {
-    if(signum == SIGTERM) {
+    if(signum == SIGTERM || signum == SIGINT) {
         tstop_stop_threads(stop_controller);
     }
 }
@@ -30,6 +30,7 @@ int main()
     struct sigaction action = { 0, };
     action.sa_handler = term_all_threads;
     sigaction(SIGTERM, &action, NULL);
+    sigaction(SIGINT, &action, NULL);
 
     Buff_sync* reader_analyzer_buffer = buff_sync_create(10);
     Buff_sync* analyzer_printer_buffer = buff_sync_create(10);
