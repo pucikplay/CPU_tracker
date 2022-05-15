@@ -32,7 +32,6 @@ char** util_str_split(char* restrict data, const char delimiter, size_t* token_c
         token = strtok(0, delim);
         ++idx;
     }
-    free(token);
 
     *token_count = idx;
 
